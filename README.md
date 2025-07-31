@@ -2,6 +2,32 @@
 
 A fullstack Rust web application that provides **true random shuffling** for Spotify playlists – because Spotify's "shuffle" isn't really random.
 
+Currently working on a graphdb neurosymbolic playlist unraveler. Basically, I want to make playlists based off my music library or a seldction of playlists, based off "Concepts" such as genre, language, or whatever. Im not happy with how spotify manages my music, in that I cant just like get all of my saved Reggaeton songs in a single playlist, or all of my amapiano songs in a single playlist. Their whole AI system of making playlists focuses on what youre currently listening to, and puts new songs-- not valuing your current music library at all. 
+
+## Current Work
+
+ - neo4j DB with multi user support and song library (Done)
+ - Multi user site support (Done)
+ - LLM feature extraction for tracks 
+ - Symbolic reasoning for playlist creation
+
+At first, I wanted to do this in a "seed and expand" system, where:
+ - I obtain hard features for tracks, such as bpm, energy, time sig, speechiness, via spotify API
+ - "Seed" a concept, by giving an llm a track that represents a concept. LLM gives me rules that could define what tracks fit the concept. 
+ - Perform graph optimized creation of giving other tracks that fit the rule, the concept.
+ - Get playlist
+
+However, turns out that the spotify music features api is deprecated. 
+ - Now exploring getting track features via LLM, in large batches. 
+ - Features: genre, influence, country of origin, beat type, rthyhmn pattern, vocal style, theme
+ - 
+In testing, this approach gives me good features for even new songs. However, still doing work on how to do symbolic reasoning, as the whole point is that
+I do not want to rely on LLMs for music information that much -- want minimal and strong features given to tracks from an LLM, and the creation of new symbols via reasoning. 
+I dont want to waste money on enormous amounts of LLM calls to give my graphs new information.
+
+
+--- 
+
 ## Why This Exists
 
 This project was born out of two motivations:
@@ -64,6 +90,10 @@ cd betterd_spotify
 SPOTIFY_CLIENT_ID=your_client_id_here
 SPOTIFY_CLIENT_SECRET=your_client_secret_here
 REDIRECT_URI=http://localhost:8080/callback
+
+NEO4J_URI=localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASS=password
 ```
 
 4. Install dependencies:
@@ -78,6 +108,9 @@ dx serve --platform web
 
 # Terminal 2 - Watch CSS changes
 npm run watch:css
+
+# Neo4j Server
+docker run  -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH=neo4j/password neo4j:latest
 ```
 
 6. Open http://localhost:8080 in your browser

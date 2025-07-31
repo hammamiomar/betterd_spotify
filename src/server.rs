@@ -1,31 +1,30 @@
 use std::{env, sync::RwLock};
 use anyhow::Result;
-use axum::{response::Redirect, routing::get, extract::State as AxumState};
+use axum::{response::Redirect, routing::get, extract::State};
 use dioxus::prelude::*;
 use dioxus_logger;
 use dotenvy::dotenv;
+use neo4rs::Graph;
 use std::{collections::HashMap, sync::{Mutex,Arc}};
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use reqwest::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+use axum_extra::extract::cookie::*;
+use uuid::Uuid;
+use chrono::{ Utc,Duration};
+use cookie::time::Duration as CookieDuration;
 
-use crate::{api_models::SpotifyTokenResponse, App};
+
+use serde::Deserialize;
+
+use crate::{api_models::{SpotifyTokenResponse,SpotifyUserProfile}, App};
 use crate::auth::pkce;
 
 
 #[derive(Clone)]
 pub struct AppState{
     pub pkce_verifiers : Arc<Mutex<HashMap<String, String>>>,
-    pub current_user_tokens: Arc<RwLock<Option<SpotifyTokenResponse>>>
-}
-
-impl AppState{
-    pub fn new() -> Self{
-        Self{
-            pkce_verifiers: Arc::new(Mutex::new(HashMap::new())),
-            current_user_tokens: Arc::new(RwLock::new(None))
-        }
-    }
+    pub db: Arc<Graph>
 }
 
 #[cfg(feature = "server")]
@@ -40,8 +39,12 @@ pub async fn start_server() -> Result<()> {
     let _client_id = env::var("SPOTIFY_CLIENT_ID")
         .expect("SPOTIFY_CLIENT_ID must be set in .env");
 
-    let app_state = AppState::new();
-
+    let db_client = crate::db::connect().await;
+    let app_state = AppState{
+        pkce_verifiers: Arc::new(Mutex::new(HashMap::new())),
+        db: db_client,
+    };
+    
     let provider = {
         let shared = app_state.clone();
         move || Box::new(shared.clone()) as Box<dyn Any>
@@ -53,10 +56,11 @@ pub async fn start_server() -> Result<()> {
      let address = dioxus::cli_config::fullstack_address_or_localhost();
 
     let axum_router = axum::Router::new()
-        .route("/login", get(spotify_login_handler))
+        .route("/auth/spotify", get(spotify_login_handler))
         .route("/callback", get(spotify_callback_handler))
-        .serve_dioxus_application(cfg,App)
-        .with_state(app_state.clone());
+        .route("/auth/logout", get(axum_logout_handler)) 
+        .with_state(app_state.clone())
+        .serve_dioxus_application(cfg,App);
 
     let listener = tokio::net::TcpListener::bind(address).await?;
     axum::serve(listener, axum_router.into_make_service())
@@ -66,7 +70,7 @@ pub async fn start_server() -> Result<()> {
 }
 
 async fn spotify_login_handler(
-    AxumState(app_state):AxumState<AppState>,
+    State(app_state):State<AppState>,
 ) -> Redirect{
 
     let client_id = env::var("SPOTIFY_CLIENT_ID")
@@ -95,8 +99,8 @@ async fn spotify_login_handler(
     
     tracing::info!("Stored verifier for state:{}",state);
 
-    let scope = "playlist-read-private playlist-read-collaborative playlist-modify-private
-    user-read-private user-read-email ugc-image-upload";
+    let scope = "playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public
+    user-read-private user-read-email ugc-image-upload user-library-read";
 
     // construct URL
 
@@ -116,18 +120,19 @@ async fn spotify_login_handler(
 }
 
 
-
+#[axum::debug_handler]
 async fn spotify_callback_handler(
-    AxumState(app_state):AxumState<AppState>,
+    State(app_state):State<AppState>,
+    jar: CookieJar,
     query: axum::extract::Query<std::collections::HashMap<String,String>>,
-) -> Redirect{
+) -> (CookieJar, Redirect){
     // query will either respond with  code and state, or error and state
     
     let code = match query.get("code"){
         Some(c) => c.clone(),
         None => {
             tracing::error!("Callback missing code param");
-            return Redirect::temporary("/login?error=missing_code");
+            return (jar,Redirect::temporary("/login?error=missing_code"));
         }
     };
 
@@ -135,7 +140,7 @@ async fn spotify_callback_handler(
         Some(s) => s.clone(),
         None => {
             tracing::error!("Callback missing state param");
-            return Redirect::temporary("/login?error=missing_state");
+            return (jar, Redirect::temporary("/login?error=missing_state"));
         }
     };
 
@@ -148,11 +153,13 @@ async fn spotify_callback_handler(
             Some(v) => v,
             None => {
                 tracing::error!("state mismatch OR verifier not found for state");
-                return Redirect::temporary("/login?error=state_mismatch")
+                return (jar,Redirect::temporary("/login?error=state_mismatch"))
             }
         }
     };
     tracing::info!("Retrieved verifier for state: {}",received_state);
+
+    // ---------------- Exchange code for access token
 
     let client_id = env::var("SPOTIFY_CLIENT_ID").expect("SPOTIFY_CLIENT_ID must be set");
     let redirect_uri = env::var("SPOTIFY_REDIRECT_URI").expect("SPOTIFY_REDIRECT_URI must be set");
@@ -187,23 +194,19 @@ async fn spotify_callback_handler(
         .send()
         .await;
 
-    match response_result{
+    let tokens = match response_result{
         Ok(token_response) =>{
             if token_response.status().is_success(){
                 match token_response.json::<SpotifyTokenResponse>().await{
-                    Ok(token_reponse) =>{
-                        tracing::info!("Succesfully obtained tokens: {:?}", token_reponse);
+                    Ok(token) =>{
+                        tracing::info!("Succesfully obtained tokens: {:?}", token);
 
-                        //TODO Change AS its only for solo dev
-
-                        *app_state.current_user_tokens.write().unwrap() = Some(token_reponse);
-
-                        Redirect::temporary("/")
+                        token
                     }
 
                     Err(e) => {
                         tracing::error!( "failed to parse token response json:{}",e);
-                        Redirect::temporary("/login?error=token_parse_failed")
+                        return (jar, Redirect::temporary("/login?error=token_parse_failed"));
                     }
                 }
             }else{
@@ -212,12 +215,90 @@ async fn spotify_callback_handler(
                     "Failed to read error body".to_string()
                 });
                 tracing::error!("Token request failed with status {}:{}", status,text);
-                Redirect::temporary("/login?error=token_request_failed")
+                return (jar, Redirect::temporary("/login?error=token_request_failed"))
             }
         }
         Err(e) =>{
             tracing::error!("Failed to send token request: {}", e);
-            Redirect::temporary("/login?error=network_error")
+            return (jar, Redirect::temporary("/login?error=network_error"))
         }
+    };
+
+    // Get User Spotify Profile to setup profile
+    let user_profile_response = client
+        .get("https://api.spotify.com/v1/me")
+        .bearer_auth(&tokens.access_token)
+        .send()
+        .await
+        .unwrap()
+        .json::<SpotifyUserProfile>()
+        .await;
+
+    let spotify_user = match user_profile_response {
+        Ok(u) => u,
+        Err(_) => return (jar, Redirect::temporary("/login?error=profile_fetch_failed")),
+    };
+
+    // NEO4J user setup
+    let mut user_query = neo4rs::query(
+            "MERGE (u:User {spotify_id: $id})
+            SET u.display_name = $name,
+                u.access_token = $access,
+                u.refresh_token = $refresh,
+                u.last_login = datetime()",
+        );
+    user_query = user_query
+        .param("id", spotify_user.id.clone())
+        .param("name", spotify_user.display_name)
+        .param("access", tokens.access_token)
+        .param("refresh", tokens.refresh_token.unwrap_or_default()); // Handle optional refresh token
+
+    if let Err(e) = app_state.db.run(user_query).await {
+        tracing::error!("Failed to write user to DB: {}", e);
+        return (jar, Redirect::temporary("/login?error=db_error"));
     }
+
+    // --- Step 5: Create a Secure Session for the User ---
+    let session_id = Uuid::new_v4().to_string();
+    let expires = Utc::now() + Duration::days(7);
+    let expires_str = expires.to_rfc3339();
+
+    let mut session_query = neo4rs::query(
+        "MATCH (u:User {spotify_id: $id})
+         CREATE (s:Session {session_id: $sid, expires_at: datetime($exp)})
+         CREATE (u)-[:HAS_SESSION]->(s)",
+    );
+    session_query = session_query
+        .param("id", spotify_user.id)
+        .param("sid", session_id.clone())
+        .param("exp", expires_str);
+
+    if let Err(e) = app_state.db.run(session_query).await {
+        tracing::error!("Failed to write session to DB: {}", e);
+        return (jar, Redirect::temporary("/login?error=db_error"));
+    }
+
+    // --- Step 6: Set the Session Cookie and Redirect to Home ---
+    let cookie = Cookie::build(("sid", session_id))
+        .path("/")
+        .secure(cfg!(not(debug_assertions))) // Only secure in production
+        .http_only(true)
+        .same_site(SameSite::Lax)
+        .max_age(CookieDuration::days(7)) // Cookie expires in 7 days
+        .build();
+
+    // Add the cookie to the jar and redirect
+    let new_jar = jar.add(cookie);
+    (new_jar, Redirect::temporary("/"))
+}
+
+async fn axum_logout_handler(jar: CookieJar) -> (CookieJar, Redirect) {
+    // Remove the old cookie by creating a new one that expires immediately.
+    let cookie = Cookie::build(("sid", ""))
+        .path("/")
+        .max_age(CookieDuration::ZERO)
+        .build();
+
+    // Add the expiring cookie to the jar and redirect to home page.
+    (jar.add(cookie), Redirect::to("/"))
 }

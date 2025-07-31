@@ -8,8 +8,14 @@ mod routes;
 mod server;
 #[cfg(feature = "server")]
 mod auth;
+#[cfg(feature="server")]
+mod db;
+
+
+
 pub mod api;
 pub mod api_models;
+pub mod db_operations;
 
 use crate::components::layout::*;
 use crate::routes::pages::*;
@@ -44,7 +50,7 @@ fn App() -> Element {
     
     rsx! {
         document::Stylesheet { href:CSS}
-        div{ class:"min-h-screen bg-gray-900 text-gray-100 flex flex-col",
+        div{ class:"min-h-screen flex flex-col", style: "background: linear-gradient(135deg, #1a2218, #2c3e28); color: #dde7d5;",
             Router::<Route>{ }
         }
     }
@@ -62,6 +68,10 @@ enum Route {
     ShufflePage{},
     #[route("/shuffle/:playlist_id/:playlist_name")]
     ShuffleActionPage{playlist_id:String, playlist_name: String},
+    #[route("/test-audio")]
+    AudioFeaturesTestPage{},
+    #[route("/import-data")]
+    ImportDataPage{},
     #[route("/callback")]
     CallBack{},
 }

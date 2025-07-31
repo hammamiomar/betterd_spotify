@@ -18,10 +18,11 @@ pub enum ShuffleStage { // Make pub if used across modules, fine for now if only
 #[component]
 fn FetchingTracksView(playlist_name: String) -> Element {
     rsx! {
-        div { class: "text-center p-4",
-            div { class: "animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-green-500 mx-auto mb-4" }
-            p { class: "text-xl text-yellow-400", "Fetching all tracks for \"{playlist_name}\"..." }
-            p { class: "text-sm text-gray-400 mt-2", "This might take a moment for very large playlists." }
+        div { class: "text-center p-6",
+            div { class: "animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 mx-auto mb-4", style: "border-color: #7fa86d transparent transparent transparent;" }
+            p { class: "text-xl text-gradient font-mono", "┌─ FETCHING TRACKS ─┐" }
+            p { class: "text-lg font-mono", style: "color: #4f6d44;", "Scanning \"{playlist_name}\"" }
+            p { class: "text-sm font-mono mt-2", style: "color: #7fa86d;", "> Large playlists may take time..." }
         }
     }
 }
@@ -29,12 +30,11 @@ fn FetchingTracksView(playlist_name: String) -> Element {
 #[component]
 fn ShufflingAndCreatingView(playlist_name: String, num_tracks: usize) -> Element {
     rsx! {
-        div { class: "text-center p-4",
-            div { class: "animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-purple-500 mx-auto mb-4" }
-            p { class: "text-xl text-yellow-400",
-                "Processing {num_tracks} tracks for \"{playlist_name}\"."
-            }
-            p { class: "text-sm text-gray-400 mt-2", "Shuffling and creating your new playlist..."}
+        div { class: "text-center p-6",
+            div { class: "animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 mx-auto mb-4", style: "border-color: #9fc08e transparent transparent transparent;" }
+            p { class: "text-xl text-gradient font-mono", "┌─ PROCESSING TRACKS ─┐" }
+            p { class: "text-lg font-mono", style: "color: #4f6d44;", "Shuffling {num_tracks} tracks" }
+            p { class: "text-sm font-mono mt-2", style: "color: #7fa86d;", "Creating playlist \"{playlist_name}\"" }
         }
     }
 }
@@ -42,17 +42,23 @@ fn ShufflingAndCreatingView(playlist_name: String, num_tracks: usize) -> Element
 #[component]
 fn ShuffleCompleteView(details: NewPlaylistDetails) -> Element {
     rsx! {
-        div { class: "text-center p-4",
-            p { class: "text-2xl text-green-500 mb-3", "＼(＾▽＾)／ True Shuffle Complete! ＼(＾▽＾)／" }
-            p { class: "text-gray-200 mb-1", "New playlist created:" }
-            p { class: "text-xl font-semibold text-gray-100 mb-4", "\"{details.name}\"" }
+        div { class: "text-center p-6",
+            p { class: "text-2xl text-gradient mb-4 font-mono", "╔═══════════════════════╗" }
+            p { class: "text-2xl text-gradient mb-4 font-mono", "║   SHUFFLE COMPLETE!   ║" }
+            p { class: "text-2xl text-gradient mb-6 font-mono", "╚═══════════════════════╝" }
+            p { class: "text-lg font-mono mb-2", style: "color: #4f6d44;", "> New playlist created:" }
+            p { class: "text-xl font-semibold font-mono mb-6", style: "color: #648a54;", "\"{details.name}\"" }
             a {
                 href: "{details.external_url}", target: "_blank", rel: "noopener noreferrer",
-                class: "inline-block px-6 py-3 text-white bg-spotify-green rounded-lg hover:bg-opacity-80 shadow-md", // Define bg-spotify-green or use existing
-                "Open New Playlist on Spotify"
+                class: "btn-glass font-mono",
+                "Open on Spotify"
             }
-            // Optional: Button to go back to shuffle selection or home
-            // Link { to: Route::ShuffleSelectPage {}, class: "mt-6 inline-block text-sm text-blue-400 hover:underline", "Shuffle Another?" }
+            div { class: "mt-6 flex justify-center space-x-1 font-mono",
+                div { class: "animate-pulse", style: "color: #9fc08e;", "(" }
+                div { class: "animate-pulse animation-delay-75", style: "color: #7fa86d;", "✓" }
+                div { class: "animate-pulse animation-delay-150", style: "color: #648a54;", "✓" }
+                div { class: "animate-pulse", style: "color: #9fc08e;", ")" }
+            }
         }
     }
 }
@@ -60,13 +66,16 @@ fn ShuffleCompleteView(details: NewPlaylistDetails) -> Element {
 #[component]
 fn ShuffleErrorView(error_message: String, on_retry: EventHandler<()>) -> Element {
     rsx! {
-        div { class: "text-center p-4",
-            p { class: "text-2xl text-red-500 mb-3", "(╯°□°）╯︵ ┻━┻ Shuffle Process Failed!" }
-            p { class: "text-gray-300 mt-2 mb-6", "{error_message}" }
+        div { class: "text-center p-6",
+            p { class: "text-2xl text-gradient mb-4 font-mono", "╔═══════════════════╗" }
+            p { class: "text-2xl text-gradient mb-4 font-mono", "║   PROCESS ERROR   ║" }
+            p { class: "text-2xl text-gradient mb-6 font-mono", "╚═══════════════════╝" }
+            p { class: "text-lg font-mono mb-2", style: "color: #4f6d44;", "> Error occurred:" }
+            p { class: "text-sm font-mono mb-6", style: "color: #7fa86d;", "{error_message}" }
             button {
-                class: "px-6 py-2 text-white bg-orange-500 rounded-lg hover:bg-orange-600 shadow",
+                class: "btn-glass font-mono",
                 onclick: move |_| on_retry.call(()),
-                "Try Again"
+                "Retry Process"
             }
         }
     }
@@ -143,25 +152,42 @@ pub fn ShuffleActionPage(playlist_id: String, playlist_name: String) -> Element 
 
     rsx! {
         div {
-            class: "p-4 md:p-8 text-center",
+            class: "space-y-8 p-4 md:p-8",
             div { /* Title div */
-                class: "mb-8",
-                h1 { class: "text-3xl md:text-4xl font-bold text-green-400 mb-1", "Shuffling:" }
-                h2 { class: "text-2xl md:text-3xl font-semibold text-gray-200", "\"{playlist_name}\"" }
-                p { class: "text-sm text-gray-400", "(ID: {playlist_id})" }
+                class: "card-glass float p-8 text-center",
+                h1 { class: "text-4xl font-bold text-gradient mb-4 font-mono",
+                    " ╔═════════════════════════════╗"
+                }
+                h1 { class: "text-4xl font-bold text-gradient mb-4 font-mono",
+                    " ║       SHUFFLING MODE       ║"
+                }
+                h1 { class: "text-4xl font-bold text-gradient mb-4 font-mono",
+                    " ╚═════════════════════════════╝"
+                }
+                p { class: "text-lg font-mono", style: "color: #4f6d44;", "Target: \"{playlist_name}\"" }
+                p { class: "text-sm font-mono", style: "color: #7fa86d;", "ID: {playlist_id}" }
             }
 
             div { // Main content area for stages
-                class: "bg-gray-800 p-6 rounded-lg shadow-lg max-w-xl mx-auto min-h-[12rem] flex flex-col items-center justify-center",
+                class: "card-glass p-6 max-w-xl mx-auto min-h-[12rem] flex flex-col items-center justify-center",
                 match &*current_stage.read() {
                     ShuffleStage::Idle => rsx! {
-                        button {
-                            class: "px-8 py-4 text-xl font-semibold text-white bg-purple-600 rounded-lg shadow hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75",
-                            onclick: move |_| {
-                                fetched_tracks_for_shuffle.set(None); // Clear previous tracks
-                                current_stage.set(ShuffleStage::FetchingTracks);
-                            },
-                            "Start True Shuffle Process!"
+                        div { class: "text-center",
+                            p { class: "text-xl text-gradient font-mono mb-6", "┌─ READY TO SHUFFLE ─┐" }
+                            button {
+                                class: "btn-glass text-lg font-mono px-8 py-4",
+                                onclick: move |_| {
+                                    fetched_tracks_for_shuffle.set(None); // Clear previous tracks
+                                    current_stage.set(ShuffleStage::FetchingTracks);
+                                },
+                                "Initialize Process"
+                            }
+                            div { class: "mt-4 flex justify-center space-x-1 font-mono",
+                                div { class: "animate-pulse", style: "color: #9fc08e;", "(" }
+                                div { class: "animate-pulse animation-delay-75", style: "color: #7fa86d;", "~" }
+                                div { class: "animate-pulse animation-delay-150", style: "color: #648a54;", "~" }
+                                div { class: "animate-pulse", style: "color: #9fc08e;", ")" }
+                            }
                         }
                     },
                     ShuffleStage::FetchingTracks => rsx! {

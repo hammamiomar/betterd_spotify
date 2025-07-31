@@ -14,7 +14,7 @@ dioxus-cli-config = { version = "*", optional = true }
 dotenvy = {version = "0.15.7", optional = true}
 reqwest = { version = "0.12.15", features = ["json"]}
 serde = { version = "1.0.219", features = ["derive"] }
-serde_json = { version = "1.0", optional = true }
+serde_json = { version = "1.0" }
 rand = { version = "0.8.0", optional = true }
 sha2 = {version = "0.10.9", optional = true}
 base64 = {version = "0.22.1", optional = true}
@@ -25,12 +25,16 @@ lazy_static = "1.5.0"
 dioxus-logger = "0.6.2"
 log = "0.4.27"
 wasm-logger = "0.2.0"
+neo4rs = {version = "0.8.0", optional = true}
+axum-extra = { version = "0.9", features = ["cookie"], optional=true}
+uuid = { version = "1.17.0", features = ["v4"], optional = true}
+chrono = {version = "0.4.41", optional = true}
+cookie = "0.18.1"
 
 [features]
 server = ["dioxus/server",
     "dep:axum", 
     "dep:tokio",
-    "dep:serde_json",
     "dep:dotenvy",
     "dep:rand",
     "dep:base64",
@@ -38,7 +42,11 @@ server = ["dioxus/server",
     "dep:tracing",
     "dep:tracing-subscriber", 
     "dioxus-cli-config",
-    "dep:rand"]
+    "dep:rand",
+    "dep:neo4rs",
+    "dep:axum-extra",
+    "dep:uuid",
+    "dep:chrono"]
 web = ["dioxus/web"]
 
 [profile]

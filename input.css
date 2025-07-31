@@ -1,1 +1,296 @@
 @import "tailwindcss";
+
+/* Tailwind Custom Utilities for Sage Green Glass Theme */
+@layer components {
+  /* Glass morphism effects */
+  .glass {
+    background: rgba(247, 249, 245, 0.1);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(221, 231, 213, 0.2);
+    box-shadow: 0 10px 15px -3px rgba(127, 168, 109, 0.1), 0 4px 6px -2px rgba(127, 168, 109, 0.05);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .glass {
+      background: rgba(44, 62, 40, 0.3);
+      border-color: rgba(127, 168, 109, 0.3);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  /* Button variants */
+  .btn-glass {
+    @apply px-6 py-3 rounded-2xl font-medium 
+           hover:scale-[1.02] hover:-translate-y-0.5 active:scale-[0.98] 
+           transition-all duration-300 ease-out cursor-pointer;
+    color: #4f6d44; /* sage-700 */
+    background: rgba(247, 249, 245, 0.1);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(221, 231, 213, 0.2);
+    box-shadow: 0 10px 15px -3px rgba(127, 168, 109, 0.1), 0 4px 6px -2px rgba(127, 168, 109, 0.05);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .btn-glass {
+      color: #dde7d5; /* sage-200 */
+      background: rgba(44, 62, 40, 0.3);
+      border-color: rgba(127, 168, 109, 0.3);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  .btn-glass:hover {
+    background: rgba(159, 192, 142, 0.2);
+    box-shadow: 0 20px 25px -5px rgba(127, 168, 109, 0.2), 0 10px 10px -5px rgba(127, 168, 109, 0.1);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .btn-glass:hover {
+      background: rgba(127, 168, 109, 0.2);
+    }
+  }
+  
+  /* Card variants */
+  .card-glass {
+    @apply p-6 rounded-2xl hover:scale-[1.02] transition-all duration-500 ease-out cursor-pointer;
+    background: rgba(247, 249, 245, 0.1);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(221, 231, 213, 0.2);
+    box-shadow: 0 10px 15px -3px rgba(127, 168, 109, 0.1), 0 4px 6px -2px rgba(127, 168, 109, 0.05);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .card-glass {
+      background: rgba(44, 62, 40, 0.3);
+      border-color: rgba(127, 168, 109, 0.3);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  .card-glass:hover {
+    box-shadow: 0 25px 50px -12px rgba(127, 168, 109, 0.25);
+  }
+  
+  /* Navigation glass */
+  .nav-glass {
+    @apply border-0 border-b sticky top-0 z-50;
+    background: rgba(247, 249, 245, 0.1);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid rgba(221, 231, 213, 0.2);
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom-color: rgba(221, 231, 213, 0.3);
+    box-shadow: 0 10px 15px -3px rgba(127, 168, 109, 0.1), 0 4px 6px -2px rgba(127, 168, 109, 0.05);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .nav-glass {
+      background: rgba(44, 62, 40, 0.3);
+      border-color: rgba(127, 168, 109, 0.3);
+      border-bottom-color: rgba(79, 109, 68, 0.3);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    }
+  }
+  
+  /* Input glass */
+  .input-glass {
+    @apply px-4 py-3 rounded-xl focus:outline-none focus:ring-2 
+           focus:scale-[1.01] transition-all duration-200;
+    color: #3d5435; /* sage-800 */
+    background: rgba(247, 249, 245, 0.1);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(221, 231, 213, 0.2);
+    box-shadow: 0 10px 15px -3px rgba(127, 168, 109, 0.1), 0 4px 6px -2px rgba(127, 168, 109, 0.05);
+    focus:ring-color: #9fc08e; /* sage-400 */
+    focus:border-color: #9fc08e; /* sage-400 */
+  }
+  
+  .input-glass::placeholder {
+    color: #7fa86d; /* sage-500 */
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .input-glass {
+      color: #dde7d5; /* sage-200 */
+      background: rgba(44, 62, 40, 0.3);
+      border-color: rgba(127, 168, 109, 0.3);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .input-glass::placeholder {
+      color: #9fc08e; /* sage-400 */
+    }
+  }
+  
+  /* Status indicators */
+  .status-imported {
+    @apply px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border;
+    color: #4f6d44; /* sage-700 */
+    background: rgba(127, 168, 109, 0.2);
+    border-color: rgba(127, 168, 109, 0.3);
+  }
+  
+  .status-available {
+    @apply px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm border;
+    color: #648a54; /* sage-600 */
+    background: rgba(238, 243, 234, 0.5);
+    border-color: rgba(193, 212, 182, 0.3);
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .status-imported {
+      color: #c1d4b6; /* sage-300 */
+    }
+    
+    .status-available {
+      color: #9fc08e; /* sage-400 */
+      background: rgba(61, 84, 53, 0.5);
+      border-color: rgba(100, 138, 84, 0.3);
+    }
+  }
+  
+  /* Solid color text instead of gradient to avoid rectangle issues */
+  .text-gradient {
+    @apply font-bold;
+    color: #7fa86d; /* sage-500 */
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .text-gradient {
+      color: #c1d4b6; /* sage-300 */
+    }
+  }
+  
+  /* Floating animation */
+  .float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  /* Pulse loading */
+  .pulse-sage {
+    animation: pulse-sage 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Sparkle effect */
+  .sparkle {
+    animation: sparkle 2s ease-in-out infinite;
+  }
+}
+
+@layer base {
+  /* Base styles using Tailwind */
+  html {
+    @apply scroll-smooth;
+  }
+  
+  body {
+    @apply min-h-screen font-sans transition-colors duration-300;
+    background: linear-gradient(135deg, #f7f9f5, #eef3ea); /* sage-50 to sage-100 */
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    body {
+      background: linear-gradient(135deg, #1a2218, #2c3e28); /* sage-950 to sage-900 */
+    }
+  }
+  
+  /* Focus styles for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2;
+    outline-color: #7fa86d; /* sage-500 */
+  }
+}
+
+@layer components {
+  /* Playlist image specific styling */
+  .playlist-image {
+    @apply rounded-xl overflow-hidden transition-transform duration-500 ease-out;
+  }
+  
+  .card-glass:hover .playlist-image {
+    @apply scale-105;
+  }
+  
+  /* Link hover effects */
+  a {
+    @apply transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(127,168,109,0.5)];
+  }
+  
+  /* Modal overlay */
+  .modal-overlay {
+    @apply backdrop-blur-lg;
+    background: rgba(26, 34, 24, 0.8); /* sage-950 with 80% opacity */
+  }
+  
+  /* Progressive enhancement for glass effects */
+  @supports not (backdrop-filter: blur(48px)) {
+    .glass {
+      background: rgba(247, 249, 245, 0.95); /* sage-50 with 95% opacity */
+    }
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    @supports not (backdrop-filter: blur(48px)) {
+      .glass {
+        background: rgba(44, 62, 40, 0.95); /* sage-900 with 95% opacity */
+      }
+    }
+  }
+}
+
+@layer utilities {
+  /* Animation delay utilities */
+  .animation-delay-75 {
+    animation-delay: 75ms;
+  }
+  
+  .animation-delay-150 {
+    animation-delay: 150ms;
+  }
+  
+  /* Custom scrollbar styles */
+  .scrollbar-sage::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  .scrollbar-sage::-webkit-scrollbar-track {
+    @apply rounded;
+    background: #eef3ea; /* sage-100 */
+  }
+  
+  .scrollbar-sage::-webkit-scrollbar-thumb {
+    @apply rounded;
+    background: #9fc08e; /* sage-400 */
+  }
+  
+  .scrollbar-sage::-webkit-scrollbar-thumb:hover {
+    background: #7fa86d; /* sage-500 */
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .scrollbar-sage::-webkit-scrollbar-track {
+      background: #2c3e28; /* sage-900 */
+    }
+    
+    .scrollbar-sage::-webkit-scrollbar-thumb {
+      background: #648a54; /* sage-600 */
+    }
+    
+    .scrollbar-sage::-webkit-scrollbar-thumb:hover {
+      background: #7fa86d; /* sage-500 */
+    }
+  }
+  
+  /* Motion preference respect */
+  @media (prefers-reduced-motion: reduce) {
+    .no-motion * {
+      @apply !duration-[0.01ms] !animate-none;
+    }
+  }
+}
