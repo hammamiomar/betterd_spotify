@@ -409,7 +409,7 @@ pub async fn shuffle_and_save_new_playlist(
         // 3. Extract Track URIs AND THEN Shuffle them
         let mut track_uris: Vec<String> = tracks_for_shuffling
             .into_iter()
-            .filter_map(|t| t.id.map(|id_val| format!("spotify:track:{}", id_val)))
+            .map(|t| t.uri)
             .collect();
 
         if track_uris.is_empty() {
@@ -701,7 +701,7 @@ pub async fn test_playlist_audio_features(playlist_id: String) -> Result<String,
     
     // 3. Extract track IDs for audio features (limit to first 10 for testing)
     let track_ids: Vec<String> = tracks.iter()
-        .filter_map(|track| track.id.clone())
+        .map(|track| track.id.clone())
         .take(10)
         .collect();
     

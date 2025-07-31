@@ -61,7 +61,7 @@ pub struct PlaylistItemTrackWrapper {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct SpotifyTrackItem {
-    pub id: Option<String>,
+    pub id: String,
     pub uri: String,
     pub name: String,
     pub artists: Vec<SpotifyArtistSimple>,
