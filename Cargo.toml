@@ -25,7 +25,8 @@ lazy_static = "1.5.0"
 dioxus-logger = "0.6.2"
 log = "0.4.27"
 wasm-logger = "0.2.0"
-neo4rs = {version = "0.8.0", optional = true}
+neo4rs = {version = "0.8.0", features = ["json"],optional = true}
+gloo-timers = { version = "0.3", features = ["futures"] }
 axum-extra = { version = "0.9", features = ["cookie"], optional=true}
 uuid = { version = "1.17.0", features = ["v4"], optional = true}
 chrono = {version = "0.4.41", optional = true}

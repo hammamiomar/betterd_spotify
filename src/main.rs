@@ -68,8 +68,10 @@ enum Route {
     ShufflePage{},
     #[route("/shuffle/:playlist_id/:playlist_name")]
     ShuffleActionPage{playlist_id:String, playlist_name: String},
-    #[route("/test-audio")]
-    AudioFeaturesTestPage{},
+    #[route("/enrich")]
+    MusicLibraryEnrichmentPage{},
+    #[route("/generate")]
+    PlaylistGeneratorPage{},
     #[route("/import-data")]
     ImportDataPage{},
     #[route("/callback")]
