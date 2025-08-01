@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use crate::api_models::ImportedPlaylist;
 
 #[cfg(feature = "server")]
 use crate::{
@@ -296,4 +297,95 @@ pub async fn get_playlist_import_status(playlist_ids: Vec<String>) -> Result<Vec
     }
     
     Ok(status_list)
+}
+
+/// Get imported playlists for the current user from Neo4j database
+#[server(GetUserImportedPlaylists)]
+pub async fn get_user_imported_playlists() -> Result<Vec<ImportedPlaylist>, ServerFnError> {
+    let user = require_auth().await?;
+    let FromContext(app_state) = extract::<FromContext<AppState>, ()>().await?;
+    
+    let mut query = query(
+        "MATCH (u:User {spotify_id: $user_id})-[:OWNS]->(p:Playlist)
+         OPTIONAL MATCH (p)-[:CONTAINS]->(s:Song)
+         WITH p, COUNT(s) as song_count, 
+              COUNT(CASE WHEN s.is_enriched = true THEN 1 END) as enriched_count
+         RETURN p.id as id, p.name as name, p.description as description,
+                song_count, enriched_count,
+                (enriched_count > 0) as has_enrichment,
+                (enriched_count = song_count AND song_count > 0) as fully_enriched
+         ORDER BY p.name"
+    );
+    query = query.param("user_id", user.spotify_id.clone());
+    
+    let mut result = match app_state.db.execute(query).await {
+        Ok(result) => result,
+        Err(e) => return Err(ServerFnError::new(format!("Failed to query imported playlists: {}", e))),
+    };
+    
+    let mut playlists = Vec::new();
+    loop {
+        match result.next().await {
+            Ok(Some(row)) => {
+                let playlist = ImportedPlaylist {
+                    id: row.get("id").unwrap_or_default(),
+                    name: row.get("name").unwrap_or_default(),
+                    description: row.get("description").unwrap_or_default(),
+                    song_count: row.get("song_count").unwrap_or(0),
+                    enriched_count: row.get("enriched_count").unwrap_or(0),
+                    has_enrichment: row.get("has_enrichment").unwrap_or(false),
+                    fully_enriched: row.get("fully_enriched").unwrap_or(false),
+                };
+                playlists.push(playlist);
+            }
+            Ok(None) => break,
+            Err(_) => break,
+        }
+    }
+    
+    tracing::info!("Found {} imported playlists for user {}", playlists.len(), user.spotify_id);
+    Ok(playlists)
+}
+
+/// Get enrichment status for a single playlist (for real-time updates)
+#[server(GetPlaylistEnrichmentStatus)]
+pub async fn get_playlist_enrichment_status(playlist_id: String) -> Result<ImportedPlaylist, ServerFnError> {
+    let user = require_auth().await?;
+    let FromContext(app_state) = extract::<FromContext<AppState>, ()>().await?;
+    
+    let mut query = query(
+        "MATCH (u:User {spotify_id: $user_id})-[:OWNS]->(p:Playlist {id: $playlist_id})
+         OPTIONAL MATCH (p)-[:CONTAINS]->(s:Song)
+         WITH p, COUNT(s) as song_count, 
+              COUNT(CASE WHEN s.is_enriched = true THEN 1 END) as enriched_count
+         RETURN p.id as id, p.name as name, p.description as description,
+                song_count, enriched_count,
+                (enriched_count > 0) as has_enrichment,
+                (enriched_count = song_count AND song_count > 0) as fully_enriched"
+    );
+    query = query
+        .param("user_id", user.spotify_id)
+        .param("playlist_id", playlist_id);
+    
+    let mut result = match app_state.db.execute(query).await {
+        Ok(result) => result,
+        Err(e) => return Err(ServerFnError::new(format!("Failed to query playlist enrichment status: {}", e))),
+    };
+    
+    match result.next().await {
+        Ok(Some(row)) => {
+            let playlist = ImportedPlaylist {
+                id: row.get("id").unwrap_or_default(),
+                name: row.get("name").unwrap_or_default(),
+                description: row.get("description").unwrap_or_default(),
+                song_count: row.get("song_count").unwrap_or(0),
+                enriched_count: row.get("enriched_count").unwrap_or(0),
+                has_enrichment: row.get("has_enrichment").unwrap_or(false),
+                fully_enriched: row.get("fully_enriched").unwrap_or(false),
+            };
+            Ok(playlist)
+        }
+        Ok(None) => Err(ServerFnError::new("Playlist not found")),
+        Err(e) => Err(ServerFnError::new(format!("Failed to read playlist data: {}", e))),
+    }
 }

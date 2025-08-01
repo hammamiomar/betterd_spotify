@@ -26,7 +26,8 @@ pub fn NavBar() -> Element {
                         Some(Ok(true)) => rsx!{
                             li {Link {to:Route::ShufflePage{  }, class: "font-medium transition-colors font-mono", style: "color: #4f6d44;", "[ SHUFFLE ]"}}
                             li {Link {to:Route::ImportDataPage{  }, class: "font-medium transition-colors font-mono", style: "color: #4f6d44;", "[ IMPORT ]"}}
-                            li {Link {to:Route::AudioFeaturesTestPage{  }, class: "font-medium transition-colors font-mono", style: "color: #4f6d44;", "[ ANALYZE ]"}}
+                            li {Link {to:Route::MusicLibraryEnrichmentPage{  }, class: "font-medium transition-colors font-mono", style: "color: #4f6d44;", "[ ENRICH ]"}}
+                            li {Link {to:Route::PlaylistGeneratorPage{  }, class: "font-medium transition-colors font-mono", style: "color: #4f6d44;", "[ GENERATE ]"}}
 
                             li {
                                 button {
